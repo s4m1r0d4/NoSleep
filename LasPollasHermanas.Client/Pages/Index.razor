@@ -1,0 +1,117 @@
+﻿@page "/index"
+@using LasPollasHermanas.Shared.Models;
+@using Data;
+@inject NavigationManager NavigationManager
+@inject DildoClient client
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+
+<AuthorizeView>
+    <Authorized>
+        <h1>Las Pollas Hermanas Catalog</h1>
+        @if (dildos is null)
+        {
+            <p>Loading ...</p>
+        }
+        else
+        {
+            <DeleteDildo dildo="@currentDildo" OnClose="@OnDeleteModalCloseAsync">
+            </DeleteDildo>
+            <div class="row-xs-6 padded">
+                <input type="text" @bind-value="searchQuery" @oninput="SearchAsync" placeholder="Search store" />
+            </div>
+            <br />
+            <div class="row mb-4">
+                <div class="col-sm-6">
+                    <button type="button" class="btn btn-primary" @onclick="CreateDildo">New Dildo</button>
+                </div>
+            </div>
+            <table class="table table-striped table-bordered table-hover">
+            <thead class="table-dark">
+                <th>Id</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Size</th>
+                <th>Expire Date</th>
+                <th>Material</th>
+                <th>Color</th>
+                <th>Stock</th>
+                <th></th>
+                <th></th>
+            </thead>
+            <tbody>
+                @if (filteredDildos != null)
+                    {
+                        @foreach (var dildo in filteredDildos)
+                        {
+                            <tr>
+                                <td>@dildo.Id</td>
+                                <td>@dildo.Name</td>
+                                <td>@dildo.Price</td>
+                                <td>@dildo.Size</td>
+                                <td>@dildo.ExpireDate.ToString("MM/dd/yyyy")</td>
+                                <td>@dildo.Material</td>
+                                <td>@dildo.Color</td>
+                                <td>@dildo.Stock</td>
+                                <td>
+                                    <button class="btn btn-primary" @onclick="(() =>EditDildo(dildo.Id))">
+                                        <i class="oi oi-pencil"></i>
+                                    </button>
+                                </td>
+                                <td>
+                                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                        @onclick="(() => currentDildo = dildo)"> <i class="oi oi-x"></i></button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        }
+    </Authorized>
+</AuthorizeView>
+
+
+
+@code
+{
+    private Dildo[]? dildos;
+    private Dildo? currentDildo;
+    private string searchQuery = "";
+    private Dildo[]? filteredDildos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        dildos = await client.GetDildosAsync();
+        filteredDildos = dildos;
+    }
+
+    private void CreateDildo()
+    {
+        NavigationManager.NavigateTo("dildo");
+    }
+
+    private void EditDildo(int id)
+    {
+        NavigationManager.NavigateTo($"/dildo/{id}");
+    }
+
+    private async Task OnDeleteModalCloseAsync(bool accepted)
+    {
+        if (accepted)
+        {
+            await client.DeleteDildoAsync(currentDildo!.Id);
+            dildos = await client.GetDildosAsync();
+            filteredDildos = dildos;
+        }
+    }
+
+    private async Task SearchAsync(ChangeEventArgs e)
+    {
+        await Task.Delay(200);
+        searchQuery = e.Value!.ToString() ?? "";
+        filteredDildos = String.IsNullOrWhiteSpace(searchQuery)
+        ? dildos
+        : await client.SearchDildosAsync(searchQuery);
+    }
+}

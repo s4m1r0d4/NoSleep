@@ -1,0 +1,117 @@
+﻿@page "/dildo"
+@page "/dildo/{id:int}"
+@using LasPollasHermanas.Shared.Models
+@using Data
+@inject NavigationManager NavigationManager
+@inject DildoClient client
+<PageTitle>New Dildo</PageTitle>
+<h1>Dildo Catalog</h1>
+<h3>@title</h3>
+@if (dildo is null) {
+    <p><em>Loading ...</em></p>
+} else {
+    <div class="row">
+    <div class="col-sm-4">
+        <EditForm Model="@dildo" class="mb-5" OnValidSubmit="HandleSubmitAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="mb-3">
+                <label for="name" class="form-label">Name :</label>
+                <InputText id="name" @bind-Value="dildo.Name" class="form-control"></InputText>
+            </div>
+            <div class="mb-3">
+                <label for="price" class="form-label">Price :</label>
+                <InputNumber id="price" @bind-Value="dildo.Price" class="form-control"></InputNumber>
+            </div>
+            <div class="mb-3">
+                <label for="size" class="form-label">Size :</label>
+                <InputNumber id="size" @bind-Value="dildo.Size" class="form-control"></InputNumber>
+            </div>
+            <div class="mb-3">
+                <label for="expireDate" class="form-label">Expire Date :</label>
+                <InputDate id="expireDate" @bind-Value="dildo.ExpireDate" class="form-control"></InputDate>
+            </div>
+            <div class="mb-3">
+                <label for="material" class="form-label">Material :</label>
+                <InputSelect id="material" @bind-Value="dildo.Material" class="form-select">
+                    <option value="default" selected="selected">Selecciona el material</option>
+                    <option value="Plastico">Plastico</option>
+                    <option value="Metal">Metal</option>
+                    <option value="Madera">Madera</option>
+                    <option value="Cristal">Cristal</option>
+                    <option value="Silicon">Silicon</option>
+                </InputSelect>
+            </div>
+            <div class="mb-3">
+                <label for="color" class="form-label">Color :</label>
+                <InputText id="color" @bind-Value="dildo.Color" class="form-control"></InputText>
+            </div>
+            <div class="mb-3">
+                <label for="stock" class="form-label">Stock :</label>
+                <InputNumber id="stock" @bind-Value="dildo.Stock" class="form-control"></InputNumber>
+            </div>
+            <button type="Submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+
+        </EditForm>
+    </div>
+</div>
+}
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+    private Dildo? dildo;
+    private string title = string.Empty;
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id is not null)
+        {
+            Dildo foundDildo = await client.GetDildoAsync(Id.Value);
+            dildo = new()
+                {
+                    Id = foundDildo.Id,
+                    Name = foundDildo.Name,
+                    Price = foundDildo.Price,
+                    Size = foundDildo.Size,
+                    ExpireDate = foundDildo.ExpireDate,
+                    Material = foundDildo.Material,
+                    Color = foundDildo.Color,
+                    Stock = foundDildo.Stock
+                };
+                title = $"Edit {dildo!.Name}";
+        }
+        else
+        {
+            title = "New Dildo";
+            dildo = new()
+                {
+                    Name = String.Empty,
+                    Price = 0.0M,
+                    Size = 0.0M,
+                    ExpireDate = DateTime.UtcNow,
+                    Material = String.Empty,
+                    Color = String.Empty,
+                    Stock = 0
+                };
+        }
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        if (dildo!.Id == 0)
+        {
+            await client.AddDildoAsync(dildo);
+        }
+        else
+        {
+            await client.UpdateDildoAsync(dildo);
+        }
+        NavigationManager.NavigateTo("/index");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/index");
+    }
+}

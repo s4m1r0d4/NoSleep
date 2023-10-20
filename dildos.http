@@ -1,0 +1,59 @@
+@baseUrl = http://localhost:5222
+GET {{baseUrl}}/dildos
+
+###
+GET {{baseUrl}}/dildos/2 
+
+
+###
+POST {{baseUrl}}/dildos
+content-type: application/json
+
+{
+    "name": "aaaa",
+    "price": 70,
+    "size": 23.1,
+    "expireDate": "2030-03-12T00:00:00",
+    "material": null,
+    "color": null,
+    "stock": 0
+}
+
+###
+PUT {{baseUrl}}/dildos/2
+content-type: application/json
+
+{
+  "name": "Dildo De Dev Ops",
+  "price": 8000,
+  "size": 25.1,
+  "expireDate": "2030-04-12T00:00:00",
+  "material": null,
+  "color": null,
+  "stock": 0
+}
+
+###
+DELETE {{baseUrl}}/dildos/2
+
+
+###
+POST {{baseUrl}}/auth/register/mortaluser
+content-type: application/json
+
+{
+    "Email": "user@example.com",
+    "Password": "YourStrongPassword",
+    "Name": "John",
+    "Surname": "Doe",
+    "BirthDate": "1990-01-15T00:00:00"
+}
+
+###
+POST http://localhost:5007/auth/login
+content-type: application/json
+
+{
+  "Email": "user@example.com",
+  "Password": "YourStrongPassword"
+}
