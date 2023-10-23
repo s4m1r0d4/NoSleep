@@ -1,0 +1,50 @@
+@page "/profile"
+@using LasPollasHermanas.Shared.Models;
+@using Data;
+@inject AuthenticationStateProvider autenticacionProvider
+@inject NavigationManager NavigationManager
+@inject DildoClient dildoClient
+@inject UserClient userClient
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using LasPollasHermanas.Client.Extensions
+@using System.Security.Claims
+@attribute [Authorize(Roles = "Mortal")]
+
+<h1>Profile</h1>
+
+@if (User is null) {
+    <p><em>Loading...</em></p>
+} else {
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">User Information</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Name:</strong> @User.Name</p>
+                    <p><strong>Surname:</strong> @User.Surname</p>
+                    <p><strong>Birthdate:</strong> @User.BirthDate.ToString("dd/MM/yyyy")</p>
+                    <p>
+                        <strong>Bought Dildos:</strong> 
+                        <a href="/history">Here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    public MortalUser? User { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var autenticacionExt = (AuthExtension)autenticacionProvider;
+        var state = await autenticacionExt.GetAuthenticationStateAsync();
+        var email = state.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? throw new Exception("No email found");
+
+        User = await userClient.GetMortalUserAsync(email);
+    }
+}

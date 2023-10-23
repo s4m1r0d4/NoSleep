@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 using Blazored.SessionStorage;
 using LasPollasHermanas.Shared;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -28,7 +24,7 @@ public class AuthExtension : AuthenticationStateProvider
             {
                 new(ClaimTypes.Name, sessionDTO.Name),
                 new(ClaimTypes.Email, sessionDTO.Email),
-                new(ClaimTypes.Role, sessionDTO.Role)
+                new(ClaimTypes.Role, sessionDTO.Role),
             }, "JwtAuth"));
 
             await _sessionStorage.SaveStorage("userSession", sessionDTO);

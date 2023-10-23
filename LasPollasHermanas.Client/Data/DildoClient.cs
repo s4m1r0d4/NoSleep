@@ -1,6 +1,5 @@
 namespace LasPollasHermanas.Client.Data;
 using System.Net.Http.Json;
-using LasPollasHermanas.Shared;
 using LasPollasHermanas.Shared.Models;
 public class DildoClient
 {
@@ -42,15 +41,13 @@ public class DildoClient
         await httpClient.DeleteAsync($"dildos/{id}");
     }
 
-    // Login to the server
-    public async Task<SessionDTO?> LoginAsync(LoginDTO data)
+    public async Task BuyDildo(int dildoId, string userEmail)
     {
-        var response = await httpClient.PostAsJsonAsync("auth/login", data);
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new Exception($"Failed to login: {response.StatusCode}");
-        }
+        await httpClient.PostAsJsonAsync($"dildos/buy/{dildoId}", userEmail);
+    }
 
-        return await response.Content.ReadFromJsonAsync<SessionDTO>();
+    public async Task<Dildo[]?> GetBoughtDildos(string userEmail)
+    {
+        return await httpClient.GetFromJsonAsync<Dildo[]>($"dildos/history/{userEmail}");
     }
 }

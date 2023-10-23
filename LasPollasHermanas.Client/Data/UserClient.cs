@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using LasPollasHermanas.Shared;
+using LasPollasHermanas.Shared.Models;
 using System.Net.Http.Json;
-using System.Text.Json;
 
 
 namespace LasPollasHermanas.Client.Data;
@@ -30,5 +26,24 @@ public class UserClient
         {
             return null;
         }
+    }
+
+    public async Task<MortalUserDTO?> TryRegister(MortalUserDTO registerDTO)
+    {
+        var response = await httpClient.PostAsJsonAsync("auth/register/mortaluser", registerDTO);
+        
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<MortalUserDTO>();
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    public async Task<MortalUser?> GetMortalUserAsync(string email)
+    {
+        return await httpClient.GetFromJsonAsync<MortalUser?>($"auth/user/{email}");
     }
 }

@@ -2,9 +2,12 @@
 @page "/dildo/{id:int}"
 @using LasPollasHermanas.Shared.Models
 @using Data
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager NavigationManager
 @inject DildoClient client
-<PageTitle>New Dildo</PageTitle>
+@attribute [Authorize(Roles = "Admin")]
+
 <h1>Dildo Catalog</h1>
 <h3>@title</h3>
 @if (dildo is null) {

@@ -1,0 +1,63 @@
+@page "/history"
+@using LasPollasHermanas.Shared.Models;
+@using Data;
+@inject AuthenticationStateProvider autenticacionProvider
+@inject NavigationManager NavigationManager
+@inject DildoClient dildoClient
+@inject UserClient userClient
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using LasPollasHermanas.Client.Extensions
+@using System.Security.Claims
+@attribute [Authorize(Roles = "Mortal")]
+
+
+<h1>Bought dildos</h1>
+
+@if (dildos is null) {
+    <p>Loading ...</p>
+} else {
+    <table class="table table-striped table-bordered table-hover">
+    <thead class="table-dark">
+        <th>Id</th>
+        <th>Name</th>
+        <th>Price</th>
+        <th>Size</th>
+        <th>Expire Date</th>
+        <th>Material</th>
+        <th>Color</th>
+        <th>Stock</th>
+    </thead>
+    <tbody>
+        @if (dildos != null)
+            {
+                @foreach (var dildo in dildos)
+                {
+                    <tr>
+                        <td>@dildo.Id</td>
+                        <td>@dildo.Name</td>
+                        <td>@dildo.Price</td>
+                        <td>@dildo.Size</td>
+                        <td>@dildo.ExpireDate.ToString("MM/dd/yyyy")</td>
+                        <td>@dildo.Material</td>
+                        <td>@dildo.Color</td>
+                        <td>@dildo.Stock</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private Dildo[]? dildos;
+    string? email;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var autenticacionExt = (AuthExtension)autenticacionProvider;
+        var state = await autenticacionExt.GetAuthenticationStateAsync();
+        email = state.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? throw new Exception("No email found");
+        dildos = await dildoClient.GetBoughtDildos(email);
+    }
+}

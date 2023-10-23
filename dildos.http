@@ -57,3 +57,10 @@ content-type: application/json
   "Email": "user@example.com",
   "Password": "YourStrongPassword"
 }
+
+###
+GET {{baseUrl}}/dildos/select/user@example.com
+
+###
+
+DELETE {{baseUrl}}/dildos/select/1/user@example.com

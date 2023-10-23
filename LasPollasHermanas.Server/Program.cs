@@ -2,7 +2,6 @@ using LasPollasHermanas.Server.Models;
 using Microsoft.EntityFrameworkCore;
 using LasPollasHermanas.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
-using LasPollasHermanas.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCors(options => options.AddDefaultPolicy(
@@ -28,7 +27,8 @@ await context.Dildos.AsNoTracking().ToListAsync());
 dildoGroup.MapGet("/{id}", async (int id, DildoStoreContext context) =>
 {
     Dildo? dildo = await context.Dildos.FindAsync(id);
-    if (dildo is null) {
+    if (dildo is null)
+    {
         return Results.NotFound();
     }
     return Results.Ok(dildo);
@@ -39,7 +39,8 @@ dildoGroup.MapGet("/search/{query}", async (string query, DildoStoreContext cont
 {
     var dildos = await context.Dildos.Where(dildo => dildo.Name != null && dildo.Name.ToLower().Contains(query.ToLower())).ToListAsync();
 
-    if (dildos is null) {
+    if (dildos is null)
+    {
         return Results.NotFound();
     }
 
@@ -73,6 +74,46 @@ dildoGroup.MapPut("/{id}", async (int id, Dildo updatedDildo, DildoStoreContext 
     return rowsAffected == 0 ? Results.NotFound() : Results.NoContent();
 });
 
+// POST/dildos/buy/{dildoId}
+dildoGroup.MapPost("/buy/{dildoId}", async ([FromRoute] int dildoId, [FromBody] string userEmail, DildoStoreContext context) =>
+{
+    var user = await context.MortalUsers
+    .Include(u => u.BoughtDildos)
+    .Include(u => u.Account)
+    .FirstOrDefaultAsync(u => userEmail == u.Account.Email);
+    if (user == null) return Results.NotFound();
+
+    var dildo = await context.Dildos.FindAsync(dildoId);
+
+    if (dildo == null) return Results.NotFound();
+
+    if (user.BoughtDildos == null) {
+        user.BoughtDildos = new List<Dildo>{
+            dildo
+        };
+    } else {
+        user.BoughtDildos.Add(dildo);
+    }
+
+    await context.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+// GET/dildos/history/{userEmail}
+dildoGroup.MapGet("/history/{userEmail}", async (string userEmail, DildoStoreContext context) =>
+{
+    var user = await context.MortalUsers
+        .Include(u => u.BoughtDildos)
+        .FirstOrDefaultAsync(u => userEmail == u.Account.Email);
+
+    if (user == null)
+    {
+        return Results.NotFound();
+    }
+
+    return Results.Ok(user.BoughtDildos);
+});
+
 dildoGroup.MapDelete("/{id}", async (int id, DildoStoreContext context) =>
 {
     var rowsAffected = await context.Dildos.Where(
@@ -80,82 +121,65 @@ dildoGroup.MapDelete("/{id}", async (int id, DildoStoreContext context) =>
         .ExecuteDeleteAsync();
     return rowsAffected == 0 ? Results.NotFound() : Results.NoContent();
 });
-#endregion
 
-#region Entry Point Auth
+// DELETE/dildos/select/{userEmail}
+// dildoGroup.MapDelete("/select/{dildoId}/{userEmail}", async ([FromRoute] int dildoId, [FromRoute] string userEmail, DildoStoreContext context) =>
+// {
+//     var user = await context.MortalUsers
+//         .Include(u => u.CurrentDildos)
+//         .FirstOrDefaultAsync(u => userEmail == u.Account.Email);
 
-authGroup.MapPost("/register/mortaluser", async ([FromBody] MortalUserDTO req, DildoStoreContext context) =>
-{
-    bool prevAccount = await context.Accounts.AnyAsync(a => a.Email == req.Email);
+//     if (user == null)
+//     {
+//         return Results.NotFound();
+//     }
 
-    if (prevAccount) {
-        return Results.BadRequest("Account already exists");
-    }
+//     if (user.CurrentDildos == null)
+//     {
+//         return Results.NoContent();
+//     }
 
-    var account = new Account
-    {
-        Email = req.Email,
-        Password = req.Password,
-    };
+//     int index = user.CurrentDildos.FindIndex(dildo => dildo.Id == dildoId);
+//     if (index == -1)
+//     {
+//         return Results.NotFound();
+//     }
+//     user.CurrentDildos.RemoveAt(index);
 
-    var mortalUser = new MortalUser
-    {
-        Name = req.Name,
-        Surname = req.Surname,
-        BirthDate = req.BirthDate,
-    };
+//     await context.SaveChangesAsync();
+//     return Results.NoContent();
+// });
 
-    context.Accounts.Add(account);
-    await context.SaveChangesAsync();
 
-    mortalUser.AccountId = account.Id;
-    context.MortalUsers.Add(mortalUser);
+// POST/dildos/buy/{dildoId}
+// dildoGroup.MapPost("/buy/{dildoId}", async ([FromRoute] int dildoId, [FromBody] string userEmail, DildoStoreContext context) =>
+// {
+//     var user = await context.MortalUsers
+//     .Include(u => u.CurrentDildos)
+//     .Include(u => u.Account)
+//     .FirstOrDefaultAsync(u => userEmail == u.Account.Email);
 
-    await context.SaveChangesAsync();
+//     if (user == null)
+//     {
+//         return Results.NotFound();
+//     }
 
-    return Results.CreatedAtRoute("GetMortalUser",
-        new { id = mortalUser.Id }, new MortalUserDTO
-        {
-            Email = account.Email,
-            Password = account.Password,
-            Name = mortalUser.Name,
-            Surname = mortalUser.Surname,
-            BirthDate = mortalUser.BirthDate,
-            AccountId = mortalUser.AccountId,
-        });
-}).WithName("GetMortalUser");
+//     var dildo = await context.Dildos.FindAsync(dildoId);
 
-authGroup.MapPost("/login", async ([FromBody] LoginDTO data, DildoStoreContext context) =>
-{
-    var account = await context.Accounts
-        .Include(a => a.AdminUser)
-        .Include(a => a.MortalUser)
-        .FirstOrDefaultAsync(a => a.Email == data.Email && a.Password == data.Password);
+//     if (dildo == null)
+//     {
+//         return Results.NotFound();
+//     }
 
-    if (account is null) {
-        return Results.BadRequest("Invalid credentials");
-    }
+//     if (user.BoughtDildos == null) {
+//         user.BoughtDildos = new List<Dildo>{ dildo };
+//     } else {
+//         user.BoughtDildos.Add(dildo);
+//     }
 
-    if (account.AdminUser is not null) {
-        return Results.Ok(new SessionDTO
-        {
-            Email = account.Email,
-            Name = account.Password,
-            Role = "Admin",
-        });
-    }
-
-    if (account.MortalUser is not null) {
-        return Results.Ok(new SessionDTO
-        {
-            Email = account.Email,
-            Name = account.Password,
-            Role = "Mortal",
-        });
-    }
-
-    return Results.BadRequest("Invalid credentials");
-});
+//     await context.SaveChangesAsync();
+//     return Results.NoContent();
+// });
 
 #endregion
 

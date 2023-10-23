@@ -95,6 +95,18 @@ authGroup.MapPost("/login", async ([FromBody] LoginDTO data, DildoStoreContext c
     return Results.BadRequest("Invalid credentials");
 });
 
+authGroup.MapGet("/user/{email}", async (string email, DildoStoreContext context) =>
+{
+    var mortalUser = await context.MortalUsers.FirstOrDefaultAsync(m => m.Account.Email == email);
+
+    if (mortalUser is null) {
+        return Results.NotFound();
+    }
+
+    return Results.Ok(mortalUser);
+});
+
+
 #endregion
 
 app.Run();
