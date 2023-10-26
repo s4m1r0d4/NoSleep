@@ -10,6 +10,7 @@ public class DildoStoreContext : DbContext
     public DbSet<Account>    Accounts    => Set<Account>();
     public DbSet<MortalUser> MortalUsers => Set<MortalUser>();
     public DbSet<AdminUser>  AdminUsers  => Set<AdminUser>();
+    public DbSet<BoughtDildo>  BoughtDildos  => Set<BoughtDildo>();
 
     public DildoStoreContext(DbContextOptions<DildoStoreContext> options) : base(options)
     {

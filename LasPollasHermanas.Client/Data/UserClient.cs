@@ -42,6 +42,20 @@ public class UserClient
         }
     }
 
+    public async Task<AdminUserDTO?> TryRegisterAdmin(AdminUserDTO registerDTO)
+    {
+        var response = await httpClient.PostAsJsonAsync("auth/register/adminuser", registerDTO);
+        
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<AdminUserDTO>();
+        }
+        else
+        {
+            return null;
+        }
+    }
+
     public async Task<MortalUser?> GetMortalUserAsync(string email)
     {
         return await httpClient.GetFromJsonAsync<MortalUser?>($"auth/user/{email}");

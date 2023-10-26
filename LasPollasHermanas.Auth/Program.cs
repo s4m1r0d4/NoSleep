@@ -51,7 +51,7 @@ authGroup.MapPost("/register/mortaluser", async ([FromBody] MortalUserDTO req, D
 
     await context.SaveChangesAsync();
 
-    return Results.CreatedAtRoute("GetMortalUser",
+    return Results.CreatedAtRoute("RegisterMortalUser",
         new { id = mortalUser.Id }, new MortalUserDTO
         {
             Email = account.Email,
@@ -61,7 +61,44 @@ authGroup.MapPost("/register/mortaluser", async ([FromBody] MortalUserDTO req, D
             BirthDate = mortalUser.BirthDate,
             AccountId = mortalUser.AccountId,
         });
-}).WithName("GetMortalUser");
+}).WithName("RegisterMortalUser");
+
+authGroup.MapPost("/register/adminuser", async ([FromBody] AdminUserDTO req, DildoStoreContext context) =>
+{
+    bool prevAccount = await context.Accounts.AnyAsync(a => a.Email == req.Email);
+
+    if (prevAccount) {
+        return Results.BadRequest("Account already exists");
+    }
+
+    var account = new Account
+    {
+        Email = req.Email,
+        Password = req.Password,
+    };
+
+    var adminUser = new AdminUser
+    {
+        Name = req.Name,
+    };
+
+    context.Accounts.Add(account);
+    await context.SaveChangesAsync();
+
+    adminUser.AccountId = account.Id;
+    context.AdminUsers.Add(adminUser);
+
+    await context.SaveChangesAsync();
+
+    return Results.CreatedAtRoute("RegisterAdminUser",
+        new { id = adminUser.Id }, new AdminUserDTO
+        {
+            Email = account.Email,
+            Password = account.Password,
+            Name = adminUser.Name,
+            AccountId = adminUser.AccountId,
+        });
+}).WithName("RegisterAdminUser");
 
 authGroup.MapPost("/login", async ([FromBody] LoginDTO data, DildoStoreContext context) =>
 {

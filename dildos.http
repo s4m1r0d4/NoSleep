@@ -64,3 +64,14 @@ GET {{baseUrl}}/dildos/select/user@example.com
 ###
 
 DELETE {{baseUrl}}/dildos/select/1/user@example.com
+
+###
+
+POST http://localhost:5007/auth/register/adminuser
+content-type: application/json
+
+{
+  "Email": "virus@example.com",
+  "Password": "YourStrongPassword",
+  "Name": "Virus"
+}

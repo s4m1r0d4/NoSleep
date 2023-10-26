@@ -2,6 +2,8 @@ using LasPollasHermanas.Server.Models;
 using Microsoft.EntityFrameworkCore;
 using LasPollasHermanas.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore.Internal;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCors(options => options.AddDefaultPolicy(
@@ -87,16 +89,23 @@ dildoGroup.MapPost("/buy/{dildoId}", async ([FromRoute] int dildoId, [FromBody] 
 
     if (dildo == null) return Results.NotFound();
 
-    if (user.BoughtDildos == null) {
-        user.BoughtDildos = new List<Dildo>{
-            dildo
-        };
-    } else {
-        user.BoughtDildos.Add(dildo);
-    }
+    // if (user.BoughtDildos == null) {
+    //     user.BoughtDildos = new List<Dildo>{
+    //         dildo
+    //     };
+    // } else {
+    //     user.BoughtDildos.Add(dildo);
+    // }
+    var boughtDildo = new BoughtDildo
+    {
+        DildoId = dildo.Id,
+        UserId = user.Id
+    };
 
-    await context.SaveChangesAsync();
-    return Results.NoContent();
+    await context.BoughtDildos.AddAsync(boughtDildo);
+    int rows = await context.SaveChangesAsync();
+
+    return rows == 0 ? Results.Problem() : Results.NoContent();
 });
 
 // GET/dildos/history/{userEmail}
@@ -111,7 +120,12 @@ dildoGroup.MapGet("/history/{userEmail}", async (string userEmail, DildoStoreCon
         return Results.NotFound();
     }
 
-    return Results.Ok(user.BoughtDildos);
+    var boughtDildos = await context.Dildos.Join(
+        context.BoughtDildos,
+        dildo => dildo.Id,
+        boughtDildo => boughtDildo.DildoId,
+        (dildo, boughtDildo) => dildo).ToListAsync();
+    return Results.Ok(boughtDildos);
 });
 
 dildoGroup.MapDelete("/{id}", async (int id, DildoStoreContext context) =>

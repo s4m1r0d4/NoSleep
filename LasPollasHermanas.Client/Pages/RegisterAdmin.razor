@@ -1,0 +1,62 @@
+@page "/register/admin"
+@layout LoginLayout
+
+@using LasPollasHermanas.Client.Extensions
+@using LasPollasHermanas.Shared
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@using LasPollasHermanas.Client.Data
+@inject AuthenticationStateProvider authenticationStateProvider
+@inject NavigationManager navigationManager
+@inject UserClient userClient
+@attribute [Authorize(Roles = "Admin")]
+
+<h1 class="m-3">Register</h1>
+
+<EditForm Model="@registerModel" OnValidSubmit="HandleValidSubmit" class="col-md-6">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group row-md m-3">
+        <label for="email">Email</label>
+        <InputText id="email" class="form-control" @bind-Value="registerModel.Email" />
+    </div>
+
+    <div class="form-group row-md m-3">
+        <label for="password">Password</label>
+        <InputText id="password" class="form-control" type="password" @bind-Value="registerModel.Password" />
+    </div>
+
+    <div class="form-group row-md m-3">
+        <label for="name">Name</label>
+        <InputText id="name" class="form-control" @bind-Value="registerModel.Name" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Register</button>
+
+    @if (Submitted)
+    {
+        <p class="m-3">@Message</p>
+    }
+    @if (Message != null && Message == "Registration successful!")
+    {
+        <a href="/" class="m-3"> Go to log in</a>
+    }
+</EditForm>
+
+@code {
+    private AdminUserDTO registerModel = new();
+    public string Message { get; set; }
+    public bool Submitted { get; set; }
+
+    private async Task HandleValidSubmit()
+    {
+        Submitted = true;
+        var model = await userClient.TryRegisterAdmin(registerModel);
+        if (model != null) {
+            Message = "Registration successful!";
+        } else {
+            Message = "Registration failed!";
+        }
+    }
+}
